@@ -109,7 +109,9 @@ public:
   void SigmaPointPrediction(MatrixXd &Xsig_aug,double delta_t);
   void PredictMeanAndCovariance();
   void PredictRadarMeasurement(VectorXd &z_out, MatrixXd &S_out,MatrixXd &Zsig_out);
+  void PredictLidarMeasurement(VectorXd &z_out, MatrixXd &S_out,MatrixXd &Zsig_out);
   void UpdateRadarState(VectorXd &z,MatrixXd &Zsig,VectorXd &z_pred,MatrixXd &S);
+  void UpdateLidarState(VectorXd &z,MatrixXd &Zsig,VectorXd &z_pred,MatrixXd &S);
 
 };
 
