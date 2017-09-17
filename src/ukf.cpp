@@ -22,12 +22,17 @@ UKF::UKF() {
 
   // initial covariance matrix
   P_ = MatrixXd(5, 5);
+  P_<< 1.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0, 0.0,
+    1.0, 0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 1.0;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 0.2;//from quiz
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = 0.2;//pi/16
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -37,20 +42,17 @@ UKF::UKF() {
 
   // Radar measurement noise standard deviation radius in m
   std_radr_ = 0.3;
-
   // Radar measurement noise standard deviation angle in rad
   std_radphi_ = 0.03;
 
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
 
-  /**
-  TODO:
+  n_x_=5;
 
-  Complete the initialization. See ukf.h for other member properties.
+  n_aug_=n_x_+2;//longitudinal acc and yaw acc noise
 
-  Hint: one or more values initialized above might be wildly off...
-  */
+  lambda_=3-n_x_;
 }
 
 UKF::~UKF() {}
@@ -110,4 +112,44 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the radar NIS.
   */
+}
+
+
+/*******************************************************************************
+ * Programming assignment functions: 
+ *******************************************************************************/
+
+void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out) {
+
+  VectorXd x_aug = VectorXd(n_aug_);
+
+  //create augmented state covariance
+  MatrixXd P_aug = MatrixXd(n_aug_, n_aug_);
+
+  //create sigma point matrix
+  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+
+  //create augmented mean state
+  x_aug.head(5) = x_;
+  x_aug(5) = 0;//mean for noise
+  x_aug(6) = 0;//mean for noise
+
+  //create augmented covariance matrix
+  P_aug.fill(0.0);
+  P_aug.topLeftCorner(5,5) = P_;
+  P_aug(5,5) = std_a_*std_a_;
+  P_aug(6,6) = std_yawdd_*std_yawdd_;
+
+  //create square root matrix
+  MatrixXd L = P_aug.llt().matrixL();
+
+  //create augmented sigma points
+  Xsig_aug.col(0)  = x_aug;
+  for (int i = 0; i< n_aug_; i++)
+    {
+      Xsig_aug.col(i+1)       = x_aug + sqrt(lambda_+n_aug_) * L.col(i);
+      Xsig_aug.col(i+1+n_aug_) = x_aug - sqrt(lambda_+n_aug_) * L.col(i);
+    }
+
+  *Xsig_out = Xsig_aug;
 }
