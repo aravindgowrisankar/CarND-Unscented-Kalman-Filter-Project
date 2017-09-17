@@ -82,14 +82,59 @@ UKF::~UKF() {}
  * either radar or laser.
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-  /**
-  TODO:
+  if (!is_initialized_) {
+    VectorXd initial=VectorXd(5);
+    initial<<0.0,0.0,0.0,0.0,0.0;
+    previous_timestamp_ = meas_package.timestamp_;
+    
+    if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+      /**
+      Convert radar from polar to cartesian coordinates and initialize state.
+      */
+      double rho=meas_package.raw_measurements_[0];
+      double phi=meas_package.raw_measurements_[1];
+      double rho_dot=meas_package.raw_measurements_[2];
+      initial(0)= rho*cos(phi);
+      initial(1)= rho*sin(phi);
+      initial(2)= rho_dot;//assuming v=rho_dot ?
+      initial(3)=0.0;//yaw ?
+      initial(4)=0.0;//yaw rate
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
 
-  Complete this function! Make sure you switch between lidar and radar
-  measurements.
-  */
+      initial(0)= meas_package.raw_measurements_[0];
+      initial(1)= meas_package.raw_measurements_[1];
+      initial(2)= 0.0;//assuming v=rho_dot ?
+      initial(3)=0.0;//yaw ?
+      initial(4)=0.0;//yaw rate
+    }
+
+    // done initializing, no need to predict or update
+    x_=initial;
+    is_initialized_ = true;
+    return;
+  }
+
+  float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;//dt - expressed in seconds
+
+  /*****************************************************************************
+   *  Prediction
+   ****************************************************************************/
+  Prediction(dt);
+
+  /*****************************************************************************
+   *  Update
+   ****************************************************************************/
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
+    UpdateLidar(meas_package);
+  } 
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    // Laser updates
+    UpdateLidar(meas_package);
+  }
+
+  
 }
-
 /**
  * Predicts sigma points, the state, and the state covariance matrix.
  * @param {double} delta_t the change in time (in seconds) between the last
