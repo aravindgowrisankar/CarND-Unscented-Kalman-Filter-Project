@@ -181,6 +181,17 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the radar NIS.
   */
+  int n_z=3;
+  VectorXd z_obs=VectorXd(n_z);
+  z_obs<<meas_package.raw_measurements_[0],
+    meas_package.raw_measurements_[1],
+    meas_package.raw_measurements_[2];
+
+  VectorXd* z_pred;//Predicted radar measurement
+  MatrixXd* S_pred;//Predicted Covariance matrix
+  MatrixXd* Zsig;//Sigma points in radar measurement space
+  PredictRadarMeasurement(z_pred, S_pred,Zsig);
+  UpdateRadarState(z_obs,*Zsig,*z_pred,*S_pred);
 }
 
 
