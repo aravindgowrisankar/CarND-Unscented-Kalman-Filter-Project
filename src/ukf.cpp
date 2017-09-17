@@ -147,9 +147,9 @@ void UKF::Prediction(double delta_t) {
   Complete this function! Estimate the object's location. Modify the state
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
   */
-  MatrixXd* Xsig_out;
-  AugmentedSigmaPoints(Xsig_out);
-  SigmaPointPrediction(*Xsig_out,delta_t);
+  
+  MatrixXd Xsig_out=AugmentedSigmaPoints();
+  SigmaPointPrediction(Xsig_out,delta_t);
   PredictMeanAndCovariance();
 }
 
@@ -199,7 +199,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
  * Programming assignment functions: 
  *******************************************************************************/
 
-void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out) {
+MatrixXd UKF::AugmentedSigmaPoints() {
 
   VectorXd x_aug = VectorXd(n_aug_);
 
@@ -231,7 +231,7 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out) {
       Xsig_aug.col(i+1+n_aug_) = x_aug - sqrt(lambda_+n_aug_) * L.col(i);
     }
 
-  *Xsig_out = Xsig_aug;
+  return Xsig_aug;
 }
 
 void UKF::SigmaPointPrediction(MatrixXd &Xsig_aug,double delta_t) {
